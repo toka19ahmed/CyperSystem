@@ -1,0 +1,53 @@
+.cc-selector input{
+    margin:0;padding:0;
+    -webkit-appearance:none;
+       -moz-appearance:none;
+            appearance:none;
+}
+.visa{background-image:url(visa.png);}
+.mastercard{background-image:url(mastercard.png);}
+
+.hacker{background-image:url(avatars/1.jpg);}
+.sadface{background-image:url(avatars/2.png);}
+.sonic{background-image:url(avatars/3.jpg);}
+.boy4{background-image:url(avatars/4.png);}
+.mask{background-image:url(avatars/5.jpg);}
+.boy6{background-image:url(avatars/6.jpg);}
+.smileface{background-image:url(avatars/7.png);}
+.girl8{background-image:url(avatars/8.jpg);}
+.girl9{background-image:url(avatars/9.jpg);}
+.girl10{background-image:url(avatars/10.jpg);}
+.girl11{background-image:url(avatars/11.jpg);}
+.girl12{background-image:url(avatars/12.jpg);}
+
+
+
+.cc-selector input:active +.drinkcard-cc{opacity: .9;}
+.cc-selector input:checked +.drinkcard-cc{
+    -webkit-filter: none;
+       -moz-filter: none;
+            filter: none;
+}
+.drinkcard-cc{
+    cursor:pointer;
+    background-size:contain;
+    background-repeat:no-repeat;
+    display:inline-block;
+    width:100px;height:70px;
+    -webkit-transition: all 100ms ease-in;
+       -moz-transition: all 100ms ease-in;
+            transition: all 100ms ease-in;
+    -webkit-filter: brightness(1.8) grayscale(1) opacity(.7);
+       -moz-filter: brightness(1.8) grayscale(1) opacity(.7);
+            filter: brightness(1.8) grayscale(1) opacity(.7);
+}
+.drinkcard-cc:hover{
+    -webkit-filter: brightness(1.2) grayscale(.5) opacity(.9);
+       -moz-filter: brightness(1.2) grayscale(.5) opacity(.9);
+            filter: brightness(1.2) grayscale(.5) opacity(.9);
+}
+
+/* Extras */
+a:visited{color:#888}
+a{color:#444;text-decoration:none;}
+p{margin-bottom:.3em;}
