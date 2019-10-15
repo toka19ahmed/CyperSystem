@@ -74,7 +74,7 @@ if( isset($_POST["signup"]) )
     else{
         $pwd=md5($pwd);
       
-        $sql = "insert into users values ('','$username','$pwd','$email','$dates')";
+        $sql = "insert into users values ('','$username','$pwd','$email','$dates','5.jpg')";
         if ($conn->query($sql) === TRUE) {
             echo "you  Registered successfully";
             header("Location: signin.php");
