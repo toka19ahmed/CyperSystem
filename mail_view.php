@@ -1,196 +1,108 @@
 <?php 
 include_once  'upperlo.php';
+$_SESSION["successed"]="";
+  
+  
+//session_start();
+
+
+if(isset($_POST["submit"])){
 
 
 
-  $boolcheck=true;
-  $mid=$_GET["msgid"];
-  $userId=$_SESSION["user_id"];
+  $senderuname= htmlspecialchars($_POST["senderuname"]);
+  $title=htmlspecialchars($_POST["subject"]);
+  $content=htmlspecialchars($_POST["content"]);
+
+  $dates=date('d-m-Y');
+  $times=date('h:m:a');
+ 
+  $senderuname=clean($senderuname);
+  $title=clean($title);
+  $content=clean($content);
 
 
-$sql = "SELECT m.mid 
-FROM msg m ,users u , msgkeys k
-where m.Mid=k.mid
-and u.uid=k.rid
-and u.uid=$userId
-and m.mid=$mid";
-$result = $conn->query($sql);
-if ($result->num_rows > 0) {
-    // output data of each row
-    while($row = $result->fetch_assoc()) {
 
-       if($mid == $row["mid"] ) {
-           {
-              //make the Message in read mode
-              $sql = "update msg set msRead=1 
-              where Mid=$mid ";
-              if ($conn->query($sql) === TRUE){
-                //Wait to write Something
+//back-End Validation 
+$boolValid=false;
+$probMsg="";
+if (strlen($title)<1){
+  $boolValid=true;
+  $probMsg="Empty Title!";
+}
+else if (strlen($content)<1){
+  $boolValid=true;
+  $probMsg="Empty Message !";
+}
+  //Check For Existance Validation
+        //check for Existance of Username
+        $sql = "select uname from users where uname='$senderuname'";
+        $result = $conn->query($sql);
+
+        if ($result->num_rows > 0) {
+            // output data of each row
+            while($row = $result->fetch_assoc()) {
+              if( $row["uname"]!=$senderuname){
+                $boolValid=true;
+                $probMsg="Wrong UserName";
               }
-           }
-        $boolcheck=false;
-       }
+            }
+        }else{
+          $boolValid=true;
+          $probMsg="Wrong UserName";
+        }
+        
+         if($senderuname==$_SESSION['user_Name']){
+          $boolValid=true;
+          $probMsg="you Can't Send Message to yourself";
+         }
+        
+    if($boolValid){
+      $_SESSION["successed"]="<span style='Color:red;'>$probMsg </span>";
+
+    }   
+   else {
+     //taking the id of Message
+    $last_id=-1;
+    $randomNumber = rand(11101,99999);
+
+    $decrypted_txt = encrypt_decrypt('encrypt', $content,$randomNumber);
+
+    //sending Msg
+    $sql = "insert into msg values ('','$title','$decrypted_txt','$times','$dates','0')";
+    if ($conn->query($sql) === TRUE) {
+      $last_id = $conn->insert_id;
+      $_SESSION["successed"]="Message sent successfully";
+    } else {
+        echo "Error: " . $sql . "<br>" . $conn->error;
     }
 
-    
-} else {
-     //header("Location: inbox.php");
-     echo "<script> window.location.replace('inbox.php');     </script>";
+    $userId=$_SESSION["user_id"];
+
+    //Inserting Data to msgKeys
+    $sql = "insert into msgkeys values ($userId,(select uid from users where uname ='$senderuname'),$last_id,'$randomNumber')";
+    if ($conn->query($sql) === TRUE) {
+      $last_id = $conn->insert_id;
+    } else {
+        echo "Error: " . $sql . "<br>" . $conn->error;
+    }
+
+
+
+   }
+  
+
+
+
 
 }
 
-if($boolcheck){
-  echo "<script> window.location.replace('inbox.php');     </script>";
+//Remove Special Character Function
+function clean($string) {
+  $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
 
+  return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
 }
-
-
-
-
-
-
-?>
-
-<div class="col-sm-9">
-            <section class="panel">
-              <header class="panel-heading wht-bg">
-                <h4 class="gen-case">
-                    View Message
-                   
-                  </h4>
-              </header>
-              <div class="panel-body ">
-                <div class="mail-header row">
-                  <div class="col-md-8">
-                    <h4 class="pull-left">
-                      <?php
-                     
-                       $mid=$_GET["msgid"];
-                     
-                     $sql = "SELECT title FROM msg where mid=$mid ";
-                     $result = $conn->query($sql);
-                     if ($result->num_rows > 0) {
-                         // output data of each row
-                         while($row = $result->fetch_assoc()) {
-                     
-                           echo  $row["title"] ;
-                               
-                          
-                         }                                         
-                     } 
-                      ?>
-                    </h4>
-                  </div>
-                  <div class="col-md-4">
-                    
-                  </div>
-                </div>
-                <div class="mail-sender">
-                  <div class="row">
-                    <div class="col-md-8">
-                      <img src="avatars/<?php 
-
-                        $mid=$_GET["msgid"];
-
-                        $sql = "SELECT u.*
-                         FROM users u , msg s , msgkeys k 
-                        where   u.uid=k.sid
-                        and  s.mid=k.mid
-                         and s.mid=$mid ";
-                        $result = $conn->query($sql);
-                        if ($result->num_rows > 0) {
-                            // output data of each row
-                            while($row = $result->fetch_assoc()) {
-
-                                $avatar=$row["avatar"];
-                                echo $avatar;
-                                                       
-                                  }
-                              }  
-
-                       
-                       ?>" alt="">
-
-                      <?php
-                     $mid=$_GET["msgid"];
-                   
-                   $sql = "select u.uname,u.email
-                   from users u , msg s , msgkeys k
-                   where u.uid=k.sid
-                   and s.Mid=k.mid
-                   and s.Mid=$mid";
-                   $result = $conn->query($sql);
-                   if ($result->num_rows > 0) {
-                       // output data of each row
-                       while($row = $result->fetch_assoc()) {
-                         echo  " <strong>".$row["uname"]."</strong> " ;
-                         echo  " (<strong>".$row["email"]."</strong>) " ;
-                         echo  " to <strong>me</strong> " ;                         
-                       }                                         
-                   } 
-                    ?>
-                      
-                    </div>
-                    <div class="col-md-4">
-                    <?php
-                     
-                     $mid=$_GET["msgid"];
-                   
-                   $sql = "select s.dates,s.times
-                   from users u , msg s , msgkeys k
-                   where u.uid=k.sid
-                   and s.Mid=k.mid
-                   and s.Mid=$mid";
-                   $result = $conn->query($sql);
-                   if ($result->num_rows > 0) {
-                       // output data of each row
-                       while($row = $result->fetch_assoc()) {
-                   
-                        echo  " <p class='date'>".$row["times"]." - ".$row['dates']."</p>" ;                         
-                       }                                         
-                   } 
-                    ?>
-                      
-                    </div>
-                  </div>
-                </div>
-                <div class="view-mail">
-
-                   <?php
-                     
-                   $mid=$_GET["msgid"];  
-                   
-                   //getKey
-   
-                  $pKey=-1;          
-                  $sql = "select  mrkey from msgkeys 
-                  where mid=$mid";
-                  $result = $conn->query($sql);
-                  if ($result->num_rows > 0) {
-                      // output data of each row
-                      while($row = $result->fetch_assoc()) {
-                  
-                        $pKey=$row["mrkey"];                         
-                      }                                         
-                  }
-
-
-                   $sql = "select s.content
-                   from users u , msg s , msgkeys k
-                   where u.uid=k.sid
-                   and s.Mid=k.mid
-                   and s.Mid=$mid";
-                   $result = $conn->query($sql);
-                   if ($result->num_rows > 0) {
-                       // output data of each row
-                       while($row = $result->fetch_assoc()) {
-                   
-                        echo  " <p class='date'>".encrypt_decrypt('decrypt',$row["content"],$pKey)."</p>" ;                         
-                       }                                         
-                   }
-                   
- 
-            
 
 //EncryptionMessage
 function encrypt_decrypt($action, $string,$secret_key) {
@@ -212,37 +124,48 @@ function encrypt_decrypt($action, $string,$secret_key) {
   }
   return $output;
 }
+?>
 
-                    ?>
-                </div>
-                
-                <div class="compose-btn pull-left">
-                  <a style="color:white;" href="mail_compose.php?uname=<?php
-                       $friendUserName="";
-                       $mid=$_GET["msgid"];
+<div class="col-sm-9">
+              <section class="panel">
+                <header class="panel-heading wht-bg">
+                  <h4 class="gen-case">
+                      Compose Mail
                      
-                     $sql = "select u.uname,u.email
-                     from users u , msg s , msgkeys k
-                     where u.uid=k.sid
-                     and s.Mid=k.mid
-                     and s.Mid=$mid";
-                     $result = $conn->query($sql);
-                     if ($result->num_rows > 0) {
-                         // output data of each row
-                         while($row = $result->fetch_assoc()) {
-                         $friendUserName=$row["uname"];
-                                               
-                         }                                         
-                     }
-                  echo $friendUserName
-                   
-                   
-                   
-                   ?>" class="btn btn-sm btn-theme"><i class="fa fa-reply"></i> Reply</a>
+                    </h4>
+                </header>
+                <div class="panel-body">
+                  
+                  <div class="compose-mail">
+                    <form role="form-horizontal" action="mail_compose.php" method="post">
+                      <div class="form-group">
+                        <label for="to" class="">To:</label>
+                        <input name="senderuname" <?php if(isset($_GET["uname"])){ $friendName=$_GET['uname']; echo "value='$friendName'"; } ?> type="text" tabindex="1" id="to" class="form-control">
+                        
+                      </div>
+                  
+                      <div class="form-group">
+                        <label for="subject" class="">Subject:</label>
+                        <input name="subject" type="text" tabindex="1" id="subject" class="form-control">
+                      </div>
+                      <div class="compose-editor">
+                        <label  >Content:</label>
+                        <textarea name="content" class="wysihtml5 form-control" rows="9"></textarea>
+                      </div>
+                       <center id="msg" style="color:green;font-size:20px;"> <label>
+                       <?php if(isset($_SESSION["successed"]))  echo "<span style='color:green'>".$_SESSION["successed"]."</span>" ?> 
+                          
+                          </label> </center>
+                      <br><br>
+                      <div class="compose-btn">
+                        <button type="submit" name="submit" class="btn btn-theme btn-sm"><i class="fa fa-check"></i> Send</button>
+                        
+                      </div>
+                    </form>
+                  </div>
                 </div>
-              </div>
-            </section>
-          </div>
+              </section>
+            </div>
 
             <?php 
 include 'lowerlo.php';
